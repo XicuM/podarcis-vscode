@@ -2,7 +2,7 @@
   "name": "podarcis",
   "displayName": "Podarcis",
   "description": "Configure a Podarcis research vault from a sidebar: Git repositories for sources, wiki, and workspace, agent targets, and MCP servers.",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "publisher": "xicu",
   "license": "AGPL-3.0",
   "repository": {

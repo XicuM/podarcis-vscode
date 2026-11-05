@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import * as path from 'node:path';
 import type { Config, State } from './form';
 
@@ -26,26 +26,19 @@ function exec(command: string, args: string[], cwd: string, input = ''): Promise
 
 /**
  * Run the vault's Podarcis script and parse its JSON; stderr becomes the log or the error.
- * Without an installed skill, first install the latest podarcis-skill release with dotagents;
- * setup then keeps that release pinned and rewrites agents.toml from podarcis.yaml.
+ * Without an installed skill, run the latest release's script from GitHub, which installs it.
  */
 export async function runVault(
   uv: string, skill: string, root: string, config?: Config,
 ): Promise<{ state: State; log: string }> {
-  let script = path.resolve(root, skill, 'scripts', 'vault.py');
+  let script = path.resolve(root, skill, 'scripts', 'podarcis.py');
   let log = '';
   if (!existsSync(script)) {
-    const tags = await exec('git', ['ls-remote', '--tags', '--refs', '--sort=-version:refname',
-      `https://github.com/${SKILL_REPO}.git`, 'v*'], root);
-    const tag = tags.out.split('\n')[0]?.split('refs/tags/')[1];
-    if (!tag) throw new Error(`No release of ${SKILL_REPO} found.`);
-    if (!existsSync(path.join(root, 'agents.toml'))) {
-      writeFileSync(path.join(root, 'agents.toml'), 'version = 1\nagents = []\n\n[[skills]]\nname = "podarcis"\n'
-        + `source = "${SKILL_REPO}"\nref = "${tag}"\npath = "skills/podarcis"\n`);
-    }
-    const { out, err } = await exec('npx', ['--yes', '@sentry/dotagents@3.4.0', '--project', 'install'], root);
-    log = `Installed Podarcis ${tag}.\n${out}${err}`;
-    script = path.join(root, '.agents/skills/podarcis/scripts/vault.py');
+    const response = await fetch(`https://api.github.com/repos/${SKILL_REPO}/releases/latest`);
+    if (!response.ok) throw new Error(`Could not find the latest ${SKILL_REPO} release: HTTP ${response.status}.`);
+    const tag = ((await response.json()) as { tag_name: string }).tag_name;
+    script = `https://raw.githubusercontent.com/${SKILL_REPO}/${tag}/skills/podarcis/scripts/podarcis.py`;
+    log = `Installed Podarcis ${tag}.\n`;
   }
   const { out, err } = await exec(
     uv, ['run', '--quiet', script, '--root', root, ...(config ? ['setup', '--stdin'] : ['config'])],

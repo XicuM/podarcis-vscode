@@ -11,7 +11,7 @@ window.addEventListener('message', (event: MessageEvent<{ state?: State; message
     document.body.replaceChildren();
     const pre = document.createElement('pre');
     pre.className = 'podarcis-message';
-    pre.textContent = `${message}\n\nCheck podarcis.uvCommand and podarcis.skillPath in Settings. The panel installs the skill on first use, which needs Node.js (npx) and network access.`;
+    pre.textContent = `${message}\n\nCheck podarcis.uvCommand and podarcis.skillPath in Settings. The panel installs the skill on first use, which needs network access.`;
     const retry = document.createElement('button');
     retry.textContent = 'Retry';
     retry.onclick = () => vscode.postMessage({});

@@ -15,7 +15,7 @@ export interface State {
 }
 
 export const REPOS = ['sources', 'wiki', 'workspace'];
-export const TARGETS = ['claude', 'codex', 'copilot', 'cursor', 'opencode', 'pi', 'vscode'];
+export const TARGETS = ['claude', 'codex', 'opencode', 'vscode'];
 
 /** Apply the form's choices; custom MCP servers and extra skills from podarcis.yaml are kept. */
 export function nextConfig(
