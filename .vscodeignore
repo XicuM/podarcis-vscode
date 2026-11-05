@@ -1,0 +1,11 @@
+src/
+test/
+node_modules/
+*.ts
+*.vsix
+webview.css
+esbuild.config.mjs
+tsconfig.json
+package-lock.json
+.github/
+.gitignore

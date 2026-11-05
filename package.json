@@ -1,0 +1,70 @@
+{
+  "name": "podarcis",
+  "displayName": "Podarcis",
+  "description": "Configure a Podarcis research vault from a sidebar: Git repositories for sources, wiki, and workspace, agent targets, and MCP servers.",
+  "version": "1.0.0",
+  "publisher": "xicu",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/XicuM/podarcis-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=22.18"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "podarcis",
+          "title": "Podarcis",
+          "icon": "icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "podarcis": [
+        {
+          "type": "webview",
+          "id": "podarcis.setup",
+          "name": "Setup"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Podarcis",
+      "properties": {
+        "podarcis.uvCommand": {
+          "type": "string",
+          "default": "uv",
+          "description": "Name or absolute path of uv."
+        },
+        "podarcis.skillPath": {
+          "type": "string",
+          "default": ".agents/skills/podarcis",
+          "description": "Podarcis skill folder, relative to the workspace folder or absolute. The panel installs it at the default path when missing."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc && node esbuild.config.mjs",
+    "test": "node --test test/",
+    "package": "vsce package --no-dependencies --skip-license -o podarcis.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "4.1.0",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  }
+}
