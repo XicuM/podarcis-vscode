@@ -21,6 +21,7 @@ window.addEventListener('message', (event: MessageEvent<{ state?: State; message
   renderForm(document.body, state, message, {
     apply: (config) => vscode.postMessage({ config }),
     reload: () => vscode.postMessage({}),
+    update: () => vscode.postMessage({ update: true }),
   });
 });
 

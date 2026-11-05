@@ -1,6 +1,6 @@
 # Podarcis for VS Code
 
-A sidebar to configure a [Podarcis](https://github.com/XicuM/podarcis-skill) research vault: the Git repositories for `sources/`, `wiki/`, and `workspace/`, the agents to set up, and MCP servers. **Apply** saves `podarcis.yaml` and runs the skill's setup, which clones the repositories and configures every agent.
+A sidebar to configure a [Podarcis](https://github.com/XicuM/podarcis-skill) research vault: the Git repositories for `sources/`, `wiki/`, and `workspace/`, the agents to set up, recommended and custom MCP servers with their credentials, and extra skills. **Apply** saves `.agents/podarcis.yaml` and `.agents/.env` and runs the skill's setup, which clones the repositories and configures every agent. **Update** installs the latest podarcis-skill release.
 
 In a folder without the skill, the sidebar runs the latest podarcis-skill release from GitHub, which installs it into `.agents/skills/podarcis`.
 

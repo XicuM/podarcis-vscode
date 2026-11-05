@@ -74,6 +74,15 @@ test('runs the latest release from GitHub when the skill is missing', async () =
     `run --quiet https://raw.githubusercontent.com/XicuM/podarcis-skill/v2.1.0/skills/podarcis/scripts/podarcis.py --root ${root} config`);
 });
 
+test('updates by running setup from the latest release over an installed skill', async () => {
+  skillAt(path.join(root, '.agents/skills/podarcis'));
+  release(200, { tag_name: 'v2.1.0' });
+  const { log } = await runVault('uv', '.agents/skills/podarcis', root, undefined, true);
+  assert.equal(log, 'Installed Podarcis v2.1.0.\nsetup log');
+  assert.equal(readFileSync(path.join(root, 'uv.args'), 'utf8').trim(),
+    `run --quiet https://raw.githubusercontent.com/XicuM/podarcis-skill/v2.1.0/skills/podarcis/scripts/podarcis.py --root ${root} setup`);
+});
+
 test('reports a failed release lookup without running uv', async () => {
   release(403, { message: 'rate limited' });
   await assert.rejects(runVault('uv', '.agents/skills/podarcis', root), /latest XicuM\/podarcis-skill release: HTTP 403/);

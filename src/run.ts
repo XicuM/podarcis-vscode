@@ -26,14 +26,15 @@ function exec(command: string, args: string[], cwd: string, input = ''): Promise
 
 /**
  * Run the vault's Podarcis script and parse its JSON; stderr becomes the log or the error.
- * Without an installed skill, run the latest release's script from GitHub, which installs it.
+ * Without an installed skill, or to update it, run the latest release's script from GitHub, which installs it;
+ * an update also runs setup, which moves files to where the new release expects them.
  */
 export async function runVault(
-  uv: string, skill: string, root: string, config?: Config,
+  uv: string, skill: string, root: string, config?: Config, update = false,
 ): Promise<{ state: State; log: string }> {
   let script = path.resolve(root, skill, 'scripts', 'podarcis.py');
   let log = '';
-  if (!existsSync(script)) {
+  if (update || !existsSync(script)) {
     const response = await fetch(`https://api.github.com/repos/${SKILL_REPO}/releases/latest`);
     if (!response.ok) throw new Error(`Could not find the latest ${SKILL_REPO} release: HTTP ${response.status}.`);
     const tag = ((await response.json()) as { tag_name: string }).tag_name;
@@ -41,7 +42,7 @@ export async function runVault(
     log = `Installed Podarcis ${tag}.\n`;
   }
   const { out, err } = await exec(
-    uv, ['run', '--quiet', script, '--root', root, ...(config ? ['setup', '--stdin'] : ['config'])],
+    uv, ['run', '--quiet', script, '--root', root, ...(config ? ['setup', '--stdin'] : update ? ['setup'] : ['config'])],
     root, config ? JSON.stringify(config) : '',
   );
   return { state: JSON.parse(out), log: (log + err).trim() };
