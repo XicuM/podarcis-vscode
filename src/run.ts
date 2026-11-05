@@ -18,6 +18,8 @@ function exec(command: string, args: string[], cwd: string, input = ''): Promise
       if (code === 0) resolve({ out, err });
       else reject(new Error(err.trim() || `${command} exited with status ${code}`));
     });
+    // A command that exits without reading stdin fails the write; its exit status is the result.
+    child.stdin.on('error', () => {});
     child.stdin.end(input);
   });
 }
