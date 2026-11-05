@@ -2,7 +2,7 @@
   "name": "podarcis",
   "displayName": "Podarcis",
   "description": "Configure a Podarcis research vault from a sidebar: Git repositories for sources, wiki, and workspace, agent targets, and MCP servers.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "xicu",
   "license": "AGPL-3.0",
   "repository": {
@@ -57,7 +57,7 @@
   },
   "scripts": {
     "build": "tsc && node esbuild.config.mjs",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.ts",
     "package": "vsce package --no-dependencies --skip-license -o podarcis.vsix"
   },
   "devDependencies": {
