@@ -48,11 +48,11 @@ afterEach(() => {
 });
 
 test('reads the configuration with the installed skill', async () => {
-  skillAt(path.join(root, '.agents/skills/podarcis'));
-  const { state, log } = await runVault('uv', '.agents/skills/podarcis', root);
+  skillAt(path.join(root, '.agents/podarcis/lib'));
+  const { state, log } = await runVault('uv', '.agents/podarcis/lib', root);
   assert.deepEqual(state, STATE);
   assert.equal(log, 'setup log');
-  const script = path.join(root, '.agents/skills/podarcis/scripts/podarcis.py');
+  const script = path.join(root, '.agents/podarcis/lib/scripts/podarcis.py');
   assert.equal(readFileSync(path.join(root, 'uv.args'), 'utf8').trim(), `run --quiet ${script} --root ${root} config`);
   assert.deepEqual(requested, []);
 });
@@ -66,7 +66,7 @@ test('applies a configuration through setup --stdin', async () => {
 
 test('runs the latest release from GitHub when the skill is missing', async () => {
   release(200, { tag_name: 'v2.1.0' });
-  const { state, log } = await runVault('uv', '.agents/skills/podarcis', root);
+  const { state, log } = await runVault('uv', '.agents/podarcis/lib', root);
   assert.deepEqual(state, STATE);
   assert.equal(log, 'Installed Podarcis v2.1.0.\nsetup log');
   assert.deepEqual(requested, ['https://api.github.com/repos/XicuM/podarcis-skill/releases/latest']);
@@ -75,18 +75,29 @@ test('runs the latest release from GitHub when the skill is missing', async () =
 });
 
 test('adds what PodarcisNest says about the workspace', async () => {
-  skillAt(path.join(root, '.agents/skills/podarcis'));
+  skillAt(path.join(root, '.agents/podarcis/lib'));
   mkdirSync(path.join(root, '.agents/podarcis'), { recursive: true });
   writeFileSync(path.join(root, '.agents/podarcis/nest.json'), JSON.stringify({ sources_mode: 'team', locked: true, account_url: 'https://nest.example/account', extra: 1 }));
-  const { state } = await runVault('uv', '.agents/skills/podarcis', root);
+  const { state } = await runVault('uv', '.agents/podarcis/lib', root);
   assert.deepEqual(state.nest, { sources_mode: 'team', locked: true, account_url: 'https://nest.example/account' });
   writeFileSync(path.join(root, '.agents/podarcis/nest.json'), 'not json');
-  assert.equal((await runVault('uv', '.agents/skills/podarcis', root)).state.nest, undefined);
+  assert.equal((await runVault('uv', '.agents/podarcis/lib', root)).state.nest, undefined);
+});
+
+test('moves a setting that names the 2.2 skill to the new install', async () => {
+  skillAt(path.join(root, '.agents/skills/podarcis'));
+  release(200, { tag_name: 'v2.3.0' });
+  const { log } = await runVault('uv', '.agents/skills/podarcis', root);
+  assert.equal(log, 'Installed Podarcis v2.3.0.\nsetup log');
+  skillAt(path.join(root, '.agents/podarcis/lib'));
+  await runVault('uv', '.agents/skills/podarcis/', root);
+  const script = path.join(root, '.agents/podarcis/lib/scripts/podarcis.py');
+  assert.equal(readFileSync(path.join(root, 'uv.args'), 'utf8').trim(), `run --quiet ${script} --root ${root} config`);
 });
 
 test('reports a failed release lookup without running uv', async () => {
   release(403, { message: 'rate limited' });
-  await assert.rejects(runVault('uv', '.agents/skills/podarcis', root), /latest XicuM\/podarcis-skill release: HTTP 403/);
+  await assert.rejects(runVault('uv', '.agents/podarcis/lib', root), /latest XicuM\/podarcis-skill release: HTTP 403/);
   assert.throws(() => readFileSync(path.join(root, 'uv.args')));
 });
 

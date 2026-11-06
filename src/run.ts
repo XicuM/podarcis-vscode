@@ -4,6 +4,10 @@ import * as path from 'node:path';
 import type { Config, Nest, State } from './form';
 
 const SKILL_REPO = 'XicuM/podarcis-skill';
+/** Where Podarcis 2.3 and newer is installed in a vault. */
+export const DEFAULT_SKILL = '.agents/podarcis/lib';
+/** Where 2.2 and older installed it as a skill; setup from 2.3 on moves it to DEFAULT_SKILL. */
+const LEGACY_SKILL = '.agents/skills/podarcis';
 
 /** Run a command in the vault; resolve with its stdout and stderr, reject with stderr on failure. */
 function exec(command: string, args: string[], cwd: string, input = ''): Promise<{ out: string; err: string }> {
@@ -45,6 +49,8 @@ export function readNest(root: string): Nest | undefined {
 export async function runVault(
   uv: string, skill: string, root: string, config?: Config,
 ): Promise<{ state: State; log: string }> {
+  // A setting saved by an older panel names the 2.2 skill, whose own setup would never move it.
+  if (path.normalize(skill + path.sep) === path.normalize(LEGACY_SKILL + path.sep)) skill = DEFAULT_SKILL;
   let script = path.resolve(root, skill, 'scripts', 'podarcis.py');
   let log = '';
   if (!existsSync(script)) {

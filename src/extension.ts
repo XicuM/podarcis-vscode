@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { Config } from './form';
-import { runVault } from './run';
+import { DEFAULT_SKILL, runVault } from './run';
 
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
@@ -26,7 +26,7 @@ function show(context: vscode.ExtensionContext, view: vscode.WebviewView) {
     const settings = vscode.workspace.getConfiguration('podarcis');
     try {
       const { state, log } = await runVault(
-        settings.get('uvCommand', 'uv'), settings.get('skillPath', '.agents/skills/podarcis'), root, message.config,
+        settings.get('uvCommand', 'uv'), settings.get('skillPath', DEFAULT_SKILL), root, message.config,
       );
       webview.postMessage({ state, message: log, keys: settings.get<string[]>('apiKeys', []) });
     } catch (error) {

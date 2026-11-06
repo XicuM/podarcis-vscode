@@ -55,8 +55,8 @@
         },
         "podarcis.skillPath": {
           "type": "string",
-          "default": ".agents/skills/podarcis",
-          "description": "Podarcis skill folder, relative to the workspace folder or absolute. The panel installs it at the default path when missing."
+          "default": ".agents/podarcis/lib",
+          "description": "Podarcis install folder, relative to the workspace folder or absolute. The panel installs it at the default path when missing."
         }
       }
     }
