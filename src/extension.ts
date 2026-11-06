@@ -28,7 +28,7 @@ function show(context: vscode.ExtensionContext, view: vscode.WebviewView) {
       const { state, log } = await runVault(
         settings.get('uvCommand', 'uv'), settings.get('skillPath', '.agents/skills/podarcis'), root, message.config, message.update,
       );
-      webview.postMessage({ state, message: log });
+      webview.postMessage({ state, message: log, keys: settings.get<string[]>('apiKeys', []) });
     } catch (error) {
       webview.postMessage({ error: (error as Error).message });
     }

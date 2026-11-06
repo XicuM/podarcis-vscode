@@ -2,7 +2,7 @@
   "name": "podarcis",
   "displayName": "Podarcis",
   "description": "Configure a Podarcis research vault from a sidebar: Git repositories for sources, wiki, and workspace, agent targets, and MCP servers.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "publisher": "xicu",
   "license": "AGPL-3.0",
   "repository": {
@@ -46,6 +46,12 @@
           "type": "string",
           "default": "uv",
           "description": "Name or absolute path of uv."
+        },
+        "podarcis.apiKeys": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Extra credentials to ask for in the sidebar, such as model API keys (e.g. GEPETO_API_KEY). They are saved to .agents/podarcis/.env with the MCP credentials."
         },
         "podarcis.skillPath": {
           "type": "string",

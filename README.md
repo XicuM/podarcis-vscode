@@ -1,12 +1,14 @@
 # Podarcis for VS Code
 
-A sidebar to configure a [Podarcis](https://github.com/XicuM/podarcis-skill) research vault: the Git repositories for `sources/`, `wiki/`, and `workspace/`, the agents to set up, recommended and custom MCP servers with their credentials, and extra skills. **Apply** saves `.agents/podarcis.yaml` and `.agents/.env` and runs the skill's setup, which clones the repositories and configures every agent. **Update** installs the latest podarcis-skill release.
+A sidebar to configure a [Podarcis](https://github.com/XicuM/podarcis-skill) research vault: the Git repositories for `sources/`, `wiki/`, and `workspace/`, recommended and custom MCP servers with their credentials, and extra skills. **Apply** saves `.agents/podarcis/config.yaml` (repositories), `.agents/podarcis/tools.yaml` (servers and skills), and `.agents/podarcis/.env` (credentials), then runs the skill's setup, which clones the repositories and gives the tools to every agent: Claude Code, Codex, OpenCode, and VS Code. **Update** installs the latest podarcis-skill release.
 
 In a folder without the skill, the sidebar runs the latest podarcis-skill release from GitHub, which installs it into `.agents/skills/podarcis`.
 
 ## Requirements
 
 [uv](https://docs.astral.sh/uv/), plus git to sync folders with Git repositories, with network access on first use. If VS Code can't find uv, set `podarcis.uvCommand` to its absolute path.
+
+To also ask for model API keys, list their names in `podarcis.apiKeys`, e.g. `["GEPETO_API_KEY"]`. The sidebar saves them to `.agents/podarcis/.env` with the other credentials.
 
 ## Install
 

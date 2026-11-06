@@ -1,6 +1,5 @@
 export type Mcp = string | Record<string, unknown>;
 export interface Config {
-  agents: string[];
   repos: Record<string, string | null>;
   mcp: Mcp[];
   skills: Record<string, unknown>[];
@@ -18,7 +17,6 @@ export interface State {
 }
 export interface Choices {
   repos: Record<string, string>;
-  agents: string[];
   recommended: string[];
   custom: { name: string; target: string }[];
   skills: Record<string, string>[];
@@ -26,7 +24,6 @@ export interface Choices {
 }
 
 export const REPOS = ['sources', 'wiki', 'workspace'];
-export const TARGETS = ['claude', 'codex', 'opencode', 'vscode'];
 const SKILL_FIELDS = ['name', 'source', 'ref', 'path'];
 
 /**
@@ -46,7 +43,6 @@ export function nextConfig(config: Config, choices: Choices): Config {
     Object.fromEntries(SKILL_FIELDS.filter((f) => s[f]?.trim()).map((f) => [f, s[f].trim()])));
   const env = Object.fromEntries(Object.entries(choices.env).filter(([, v]) => v.trim()).map(([k, v]) => [k, v.trim()]));
   return {
-    agents: choices.agents,
     repos: Object.fromEntries(REPOS.map((r) => [r, choices.repos[r]?.trim() || null])),
     mcp: [...choices.recommended, ...custom],
     skills,
@@ -54,10 +50,14 @@ export function nextConfig(config: Config, choices: Choices): Config {
   };
 }
 
-/** Render the setup form as plain DOM, shared by the Obsidian view and the VS Code webview. */
+/**
+ * Render the setup form as plain DOM, shared by the Obsidian view and the VS Code webview.
+ * `keys` names extra credentials, such as model API keys, to ask for besides the MCP servers' ones.
+ */
 export function renderForm(
   el: HTMLElement, state: State, message: string,
   actions: { apply: (config: Config) => void; reload: () => void; update: () => void },
+  keys: string[] = [],
 ): void {
   const doc = el.ownerDocument;
   const add = <K extends keyof HTMLElementTagNameMap>(
@@ -116,20 +116,21 @@ export function renderForm(
     urls[name] = input(row, state.config.repos[name] ?? '', 'Git URL, or empty for a local folder');
   }
 
-  add(el, 'h4', 'Agents');
-  const targets = [...new Set([...TARGETS, ...state.config.agents])];
-  const agents = targets.map((t) => [t, check(el, t, state.config.agents.includes(t))] as const);
+  const env: Record<string, HTMLInputElement> = {};
+  // Values are never shown; an empty box keeps the stored one.
+  const secret = (key: string) =>
+    (env[key] = input(el, '', state.env?.includes(key) ? `${key} (set; type to replace)` : key, 'password'));
+  if (keys.length) {
+    add(el, 'h4', 'API keys');
+    keys.forEach(secret);
+  }
 
   add(el, 'h4', 'Recommended MCP servers');
-  const env: Record<string, HTMLInputElement> = {};
   const servers = Object.entries(state.catalogue).map(([name, server]) => {
     const box = check(el, name, state.config.mcp.includes(name));
     add(el, 'div', server.description, 'podarcis-muted');
     if (server.setup) add(el, 'div', server.setup, 'podarcis-muted podarcis-setup');
-    for (const key of server.env ?? []) {
-      // Values are never shown; an empty box keeps the stored one.
-      env[key] = input(el, '', state.env?.includes(key) ? `${key} (set; type to replace)` : key, 'password');
-    }
+    for (const key of server.env ?? []) if (!keys.includes(key)) secret(key);
     return [name, box] as const;
   });
 
@@ -155,7 +156,6 @@ export function renderForm(
     busy(apply, 'Applying…');
     actions.apply(nextConfig(state.config, {
       repos: Object.fromEntries(REPOS.map((r) => [r, urls[r].value])),
-      agents: agents.filter(([, b]) => b.checked).map(([t]) => t),
       recommended: servers.filter(([, b]) => b.checked).map(([n]) => n),
       custom: custom().map(([name, target]) => ({ name, target })),
       skills: skills().map((values) => Object.fromEntries(SKILL_FIELDS.map((f, i) => [f, values[i]]))),

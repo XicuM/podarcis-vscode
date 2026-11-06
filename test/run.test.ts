@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { afterEach, beforeEach, test } from 'node:test';
 import { runVault } from '../src/run.ts';
 
-const STATE = { config: { agents: [], repos: {}, mcp: [], skills: [] }, catalogue: {}, repos: {} };
+const STATE = { config: { repos: {}, mcp: [], skills: [] }, catalogue: {}, repos: {} };
 const PATH = process.env.PATH;
 const FETCH = globalThis.fetch;
 let root: string;
@@ -58,7 +58,7 @@ test('reads the configuration with the installed skill', async () => {
 });
 
 test('applies a configuration through setup --stdin', async () => {
-  const config = { agents: ['claude'], repos: { sources: null, wiki: null, workspace: null }, mcp: [], skills: [] };
+  const config = { repos: { sources: null, wiki: null, workspace: null }, mcp: [], skills: [] };
   await runVault('uv', skillAt(mkdtempSync(path.join(tmpdir(), 'podarcis-skill-'))), root, config);
   assert.match(readFileSync(path.join(root, 'uv.args'), 'utf8'), /setup --stdin$/m);
   assert.deepEqual(JSON.parse(readFileSync(path.join(root, 'uv.stdin'), 'utf8')), config);

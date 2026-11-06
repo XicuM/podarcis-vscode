@@ -3,9 +3,11 @@ import { renderForm, State } from './form';
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const vscode = acquireVsCodeApi();
 let state: State | undefined;
+let keys: string[] = [];
 
-window.addEventListener('message', (event: MessageEvent<{ state?: State; message?: string; error?: string }>) => {
+window.addEventListener('message', (event: MessageEvent<{ state?: State; message?: string; error?: string; keys?: string[] }>) => {
   state = event.data.state ?? state;
+  keys = event.data.keys ?? keys;
   const message = event.data.error ?? event.data.message ?? '';
   if (!state) {
     document.body.replaceChildren();
@@ -22,7 +24,7 @@ window.addEventListener('message', (event: MessageEvent<{ state?: State; message
     apply: (config) => vscode.postMessage({ config }),
     reload: () => vscode.postMessage({}),
     update: () => vscode.postMessage({ update: true }),
-  });
+  }, keys);
 });
 
 vscode.postMessage({});
