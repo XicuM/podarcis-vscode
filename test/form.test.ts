@@ -35,3 +35,8 @@ test('no typed credentials leaves env out', () => {
   const next = nextConfig(config, { repos: {}, recommended: [], custom: [], skills: [], env: { A: ' ' } });
   assert.equal('env' in next, false);
 });
+
+test('repositories the form did not show stay as configured', () => {
+  const next = nextConfig(config, { repos: {}, recommended: [], custom: [], skills: [], env: {} });
+  assert.deepEqual(next.repos, { sources: 'git@host:s.git', wiki: null, workspace: null });
+});

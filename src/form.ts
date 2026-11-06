@@ -7,8 +7,16 @@ export interface Config {
 }
 export interface Server { description: string; setup?: string; env?: string[] }
 export interface Repo { state: 'missing' | 'local' | 'repo'; url: string | null; empty?: boolean }
+/** Written by a PodarcisNest server into .agents/podarcis/nest.json; absent in a standalone vault. */
+export interface Nest {
+  sources_mode: 'own' | 'team' | 'mixed';
+  /** The administrator manages the sources mode and the repositories. */
+  locked: boolean;
+  account_url?: string;
+}
 export interface State {
   version?: string;
+  nest?: Nest;
   config: Config;
   catalogue: Record<string, Server>;
   repos: Record<string, Repo>;
@@ -24,6 +32,11 @@ export interface Choices {
 }
 
 export const REPOS = ['sources', 'wiki', 'workspace'];
+export const SOURCES_MODES: Record<Nest['sources_mode'], string> = {
+  own: 'Own papers: papers agents import themselves',
+  team: 'Team Drive: the team\'s Google Drive files, read-only',
+  mixed: 'Team Drive + own papers: Drive files read-only, new papers allowed',
+};
 const SKILL_FIELDS = ['name', 'source', 'ref', 'path'];
 
 /**
@@ -43,7 +56,8 @@ export function nextConfig(config: Config, choices: Choices): Config {
     Object.fromEntries(SKILL_FIELDS.filter((f) => s[f]?.trim()).map((f) => [f, s[f].trim()])));
   const env = Object.fromEntries(Object.entries(choices.env).filter(([, v]) => v.trim()).map(([k, v]) => [k, v.trim()]));
   return {
-    repos: Object.fromEntries(REPOS.map((r) => [r, choices.repos[r]?.trim() || null])),
+    // Repositories the form did not show (managed by PodarcisNest) stay as configured.
+    repos: Object.fromEntries(REPOS.map((r) => [r, r in choices.repos ? choices.repos[r]?.trim() || null : config.repos[r] ?? null])),
     mcp: [...choices.recommended, ...custom],
     skills,
     ...(Object.keys(env).length ? { env } : {}),
@@ -56,7 +70,7 @@ export function nextConfig(config: Config, choices: Choices): Config {
  */
 export function renderForm(
   el: HTMLElement, state: State, message: string,
-  actions: { apply: (config: Config) => void; reload: () => void; update: () => void },
+  actions: { apply: (config: Config) => void; reload: () => void },
   keys: string[] = [],
 ): void {
   const doc = el.ownerDocument;
@@ -105,9 +119,24 @@ export function renderForm(
   el.classList.add('podarcis-panel');
   if (message) add(el, 'pre', message, 'podarcis-message');
 
-  add(el, 'h4', 'Repositories');
+  const nest = state.nest;
+  if (nest) {
+    add(el, 'h4', 'Sources');
+    add(el, 'div', SOURCES_MODES[nest.sources_mode] ?? nest.sources_mode);
+    if (nest.locked) add(el, 'div', 'Managed by your PodarcisNest administrator.', 'podarcis-muted');
+    else if (nest.account_url) {
+      const line = add(el, 'div', 'Change it on your ', 'podarcis-muted');
+      const link = add(line, 'a', 'Account page');
+      link.href = nest.account_url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      line.append('.');
+    }
+  }
+
   const urls: Record<string, HTMLInputElement> = {};
-  for (const name of REPOS) {
+  if (!nest?.locked) add(el, 'h4', 'Repositories');
+  for (const name of nest?.locked ? [] : REPOS) {
     const repo = state.repos[name];
     const row = add(el, 'div', undefined, 'podarcis-repo');
     add(row, 'span', `${name}/`, 'podarcis-name');
@@ -146,16 +175,15 @@ export function renderForm(
   const buttons = add(el, 'div', undefined, 'podarcis-buttons');
   const apply = add(buttons, 'button', 'Apply', 'mod-cta');
   const reload = add(buttons, 'button', 'Reload');
-  const update = add(buttons, 'button', 'Update');
-  add(el, 'div', `Podarcis ${state.version ?? '2.0.0 or older'}. Update installs the latest release.`, 'podarcis-muted');
+  add(el, 'div', `Podarcis ${state.version ?? '2.0.0 or older'}${nest ? ', managed by PodarcisNest' : ''}.`, 'podarcis-muted');
   const busy = (button: HTMLButtonElement, text: string) => {
-    apply.disabled = reload.disabled = update.disabled = true;
+    apply.disabled = reload.disabled = true;
     button.textContent = text;
   };
   apply.onclick = () => {
     busy(apply, 'Applying…');
     actions.apply(nextConfig(state.config, {
-      repos: Object.fromEntries(REPOS.map((r) => [r, urls[r].value])),
+      repos: Object.fromEntries(Object.entries(urls).map(([r, box]) => [r, box.value])),
       recommended: servers.filter(([, b]) => b.checked).map(([n]) => n),
       custom: custom().map(([name, target]) => ({ name, target })),
       skills: skills().map((values) => Object.fromEntries(SKILL_FIELDS.map((f, i) => [f, values[i]]))),
@@ -163,8 +191,4 @@ export function renderForm(
     }));
   };
   reload.onclick = actions.reload;
-  update.onclick = () => {
-    busy(update, 'Updating…');
-    actions.update();
-  };
 }

@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import type { Config, State } from './form';
+import type { Config, Nest, State } from './form';
 
 const SKILL_REPO = 'XicuM/podarcis-skill';
 
@@ -24,17 +24,30 @@ function exec(command: string, args: string[], cwd: string, input = ''): Promise
   });
 }
 
+/** What a PodarcisNest server tells the panel about this workspace, or undefined in a standalone vault. */
+export function readNest(root: string): Nest | undefined {
+  try {
+    const nest = JSON.parse(readFileSync(path.join(root, '.agents', 'podarcis', 'nest.json'), 'utf8'));
+    return nest && typeof nest === 'object' && typeof nest.sources_mode === 'string'
+      ? { sources_mode: nest.sources_mode, locked: nest.locked === true, account_url: typeof nest.account_url === 'string' ? nest.account_url : undefined }
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Run the vault's Podarcis script and parse its JSON; stderr becomes the log or the error.
- * Without an installed skill, or to update it, run the latest release's script from GitHub, which installs it;
- * an update also runs setup, which moves files to where the new release expects them.
+ * Without an installed skill, run the latest release's script from GitHub, which installs it.
+ * Upgrades are not offered here: PodarcisNest provides the skill, and a standalone vault reruns
+ * setup with a newer release tag.
  */
 export async function runVault(
-  uv: string, skill: string, root: string, config?: Config, update = false,
+  uv: string, skill: string, root: string, config?: Config,
 ): Promise<{ state: State; log: string }> {
   let script = path.resolve(root, skill, 'scripts', 'podarcis.py');
   let log = '';
-  if (update || !existsSync(script)) {
+  if (!existsSync(script)) {
     const response = await fetch(`https://api.github.com/repos/${SKILL_REPO}/releases/latest`);
     if (!response.ok) throw new Error(`Could not find the latest ${SKILL_REPO} release: HTTP ${response.status}.`);
     const tag = ((await response.json()) as { tag_name: string }).tag_name;
@@ -42,8 +55,10 @@ export async function runVault(
     log = `Installed Podarcis ${tag}.\n`;
   }
   const { out, err } = await exec(
-    uv, ['run', '--quiet', script, '--root', root, ...(config ? ['setup', '--stdin'] : update ? ['setup'] : ['config'])],
+    uv, ['run', '--quiet', script, '--root', root, ...(config ? ['setup', '--stdin'] : ['config'])],
     root, config ? JSON.stringify(config) : '',
   );
-  return { state: JSON.parse(out), log: (log + err).trim() };
+  const state: State = JSON.parse(out);
+  const nest = readNest(root);
+  return { state: nest ? { ...state, nest } : state, log: (log + err).trim() };
 }

@@ -19,14 +19,14 @@ function show(context: vscode.ExtensionContext, view: vscode.WebviewView) {
 </head><body><p>Loading Podarcis configuration…</p>
 <script nonce="${nonce}" src="${webview.asWebviewUri(vscode.Uri.joinPath(dist, 'webview.js'))}"></script>
 </body></html>`;
-  // The webview can only ask to read the configuration, apply a new one, or update the skill.
-  webview.onDidReceiveMessage(async (message: { config?: Config; update?: boolean }) => {
+  // The webview can only ask to read the configuration or apply a new one.
+  webview.onDidReceiveMessage(async (message: { config?: Config }) => {
     const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!root) return webview.postMessage({ error: 'Open a vault folder to set up Podarcis.' });
     const settings = vscode.workspace.getConfiguration('podarcis');
     try {
       const { state, log } = await runVault(
-        settings.get('uvCommand', 'uv'), settings.get('skillPath', '.agents/skills/podarcis'), root, message.config, message.update,
+        settings.get('uvCommand', 'uv'), settings.get('skillPath', '.agents/skills/podarcis'), root, message.config,
       );
       webview.postMessage({ state, message: log, keys: settings.get<string[]>('apiKeys', []) });
     } catch (error) {
