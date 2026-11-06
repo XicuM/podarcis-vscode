@@ -2,7 +2,7 @@
   "name": "podarcis",
   "displayName": "Podarcis",
   "description": "Configure a Podarcis research vault from a sidebar: Git repositories for sources, wiki, and workspace, agent targets, and MCP servers.",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "publisher": "xicu",
   "license": "AGPL-3.0",
   "repository": {
@@ -10,7 +10,7 @@
     "url": "https://github.com/XicuM/podarcis-vscode.git"
   },
   "engines": {
-    "vscode": "^1.85.0",
+    "vscode": "^1.104.0",
     "node": ">=22.18"
   },
   "extensionKind": [
@@ -22,7 +22,7 @@
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
-      "activitybar": [
+      "secondarySidebar": [
         {
           "id": "podarcis",
           "title": "Podarcis",
@@ -35,7 +35,7 @@
         {
           "type": "webview",
           "id": "podarcis.setup",
-          "name": "Setup"
+          "name": "Settings"
         }
       ]
     },
